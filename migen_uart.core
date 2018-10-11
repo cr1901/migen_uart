@@ -1,0 +1,36 @@
+CAPI=2:
+
+name : ::migen_uart:0
+
+generators:
+  migen_uart:
+    interpreter: python
+    command : uart_gen.py
+    description: Migen UART generator
+    usage: |
+      Generate a simple UART with compile-time configurable baud rate
+      for a predefined target clock frequency
+
+      parameters:
+        clk_freq (int) : Frequency (Hz) of the clock
+        baud_rate (int) : Requested baud rate
+        loopback (bool) : Generate a loopback test wrapper
+        platform (str) : Target a specific Migen platform
+
+targets:
+  icestick:
+    default_tool : icestorm
+    generate : [migen_uart_icestick_loopback]
+    tools:
+      icestorm:
+        pnr: next
+    toplevel : top
+
+generate:
+  migen_uart_icestick_loopback:
+    generator : migen_uart
+    parameters:
+      clk_freq: 12000000
+      baud_rate : 19200
+      loopback : true
+      platform : icestick
