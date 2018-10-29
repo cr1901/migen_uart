@@ -4,7 +4,7 @@ name : ::migen_uart:0
 
 generators:
   migen_uart:
-    interpreter: python
+    interpreter: python3
     command : uart_gen.py
     description: Migen UART generator
     usage: |
@@ -26,6 +26,15 @@ targets:
         pnr: next
     toplevel : top
 
+  ice40up5k:
+    default_tool : icestorm
+    generate : [migen_uart_ice40up5k_loopback]
+    tools:
+      icestorm:
+        nextpnr_options: [--up5k, --package sg48]
+        pnr: next
+    toplevel : top
+
 generate:
   migen_uart_icestick_loopback:
     generator : migen_uart
@@ -34,3 +43,10 @@ generate:
       baud_rate : 19200
       loopback : true
       platform : icestick
+  migen_uart_ice40up5k_loopback:
+    generator : migen_uart
+    parameters:
+      clk_freq: 12000000
+      baud_rate : 19200
+      loopback : true
+      platform : ice40_up5k_b_evn

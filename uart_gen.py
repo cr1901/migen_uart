@@ -1,14 +1,15 @@
 from migen import If, Module
 from migen.fhdl import verilog
 from migen.fhdl.structure import Signal
+from migen.build.generic_platform import Pins, Subsignal, IOStandard
 
 from fusesoc.capi2.generator import Generator
 import importlib
 import uart
 
 class top(Module):
-    def __init__(self):
-        self.submodules.uart = uart.Core(12000000, 19200)
+    def __init__(self, clk_freq, baud_rate):
+        self.submodules.uart = uart.Core(clk_freq, baud_rate)
 
         self.rx_led = Signal()
         self.tx_led = Signal()
@@ -43,7 +44,7 @@ class UartGenerator(Generator):
         files = [{'uart.v' : {'file_type' : 'verilogSource'}}]
 
         if self.config.get('loopback'):
-            m = top()
+            m = top(clk_freq, baud_rate)
 
             if platform:
                 try:
@@ -53,21 +54,40 @@ class UartGenerator(Generator):
                     print("Can't find platform " + platform)
                     exit(1)
 
+                if platform == "ice40_up5k_b_evn":
+                    # PMOD test.
+                    pmod_serial = [
+                        ("serial", 0,
+                            Subsignal("rx", Pins("PMOD:6")),
+                            Subsignal("tx", Pins("PMOD:5")),
+                            Subsignal("rts", Pins("PMOD:4")),
+                            Subsignal("cts", Pins("PMOD:7")),
+                            IOStandard("LVCMOS33"),
+                        ),
+                    ]
+                    plat.add_extension(pmod_serial)
+
                 serial = plat.request("serial")
-                rx_led = plat.request("user_led")
-                tx_led = plat.request("user_led")
-                load_led = plat.request("user_led")
-                take_led = plat.request("user_led")
-                empty_led = plat.request("user_led")
+
+                if platform == "icestick":
+                    rx_led = plat.request("user_led")
+                    tx_led = plat.request("user_led")
+                    load_led = plat.request("user_led")
+                    take_led = plat.request("user_led")
+                    empty_led = plat.request("user_led")
+                    m.comb += [
+                        tx_led.eq(m.tx_led),
+                        rx_led.eq(m.rx_led),
+                        load_led.eq(m.load_led),
+                        take_led.eq(m.take_led),
+                        empty_led.eq(m.empty_led),
+                    ]
+
                 m.comb += [
-                    tx_led.eq(m.tx_led),
-                    rx_led.eq(m.rx_led),
-                    load_led.eq(m.load_led),
-                    take_led.eq(m.take_led),
-                    empty_led.eq(m.empty_led),
                     serial.tx.eq(m.uart.tx),
                     m.uart.rx.eq(serial.rx),
                 ]
+
                 plat.build(m, run=False, build_name="uart")
                 files = [
                     {'build/uart.v' : {'file_type' : 'verilogSource'}},
