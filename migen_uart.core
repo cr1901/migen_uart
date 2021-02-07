@@ -16,39 +16,3 @@ generators:
         baud_rate (int) : Requested baud rate
         loopback (bool) : Generate a loopback test wrapper
         platform (str) : Target a specific Migen platform
-
-targets:
-  icestick:
-    default_tool : icestorm
-    generate : [migen_uart_icestick_loopback]
-    tools:
-      icestorm:
-        nextpnr_options: [--hx1k, --package tq144]
-        pnr: next
-    toplevel : uart
-
-  ice40up5k:
-    default_tool : icestorm
-    generate : [migen_uart_ice40up5k_loopback]
-    tools:
-      icestorm:
-        nextpnr_options: [--up5k, --package sg48]
-        pnr: next
-    toplevel : uart
-
-generate:
-  migen_uart_icestick_loopback:
-    generator : migen_uart_gen
-    parameters:
-      clk_freq: 12000000
-      baud_rate : 19200
-      loopback : true
-      platform : icestick
-
-  migen_uart_ice40up5k_loopback:
-    generator : migen_uart_gen
-    parameters:
-      clk_freq: 12000000
-      baud_rate : 19200
-      loopback : true
-      platform : ice40_up5k_b_evn

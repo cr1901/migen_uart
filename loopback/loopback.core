@@ -1,0 +1,46 @@
+CAPI=2:
+
+name : cr1901:migen:uart-loopback:0
+
+filesets:
+  migen_uart_dep:
+    depend:
+      [cr1901:migen:uart]
+
+targets:
+  icestick:
+    default_tool : icestorm
+    filesets : [migen_uart_dep]
+    generate : [icestick]
+    tools:
+      icestorm:
+        nextpnr_options: [--hx1k, --package tq144]
+        pnr: next
+    toplevel : uart
+
+  ice40_up5k_b_evn:
+    default_tool : icestorm
+    filesets : [migen_uart_dep]
+    generate : [ice40_up5k_b_evn]
+    tools:
+      icestorm:
+        nextpnr_options: [--up5k, --package sg48]
+        pnr: next
+    toplevel : uart
+
+generate:
+  icestick:
+    generator : migen_uart_gen
+    parameters:
+      clk_freq: 12000000
+      baud_rate : 19200
+      loopback : true
+      platform : icestick
+
+  ice40_up5k_b_evn:
+    generator : migen_uart_gen
+    parameters:
+      clk_freq: 12000000
+      baud_rate : 19200
+      loopback : true
+      platform : ice40_up5k_b_evn
