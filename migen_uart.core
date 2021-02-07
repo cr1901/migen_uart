@@ -1,9 +1,9 @@
 CAPI=2:
 
-name : ::migen_uart:0
+name : cr1901:migen:uart:0
 
 generators:
-  migen_uart:
+  migen_uart_gen:
     interpreter: python3
     command : uart_gen.py
     description: Migen UART generator
@@ -23,8 +23,9 @@ targets:
     generate : [migen_uart_icestick_loopback]
     tools:
       icestorm:
+        nextpnr_options: [--hx1k, --package tq144]
         pnr: next
-    toplevel : top
+    toplevel : uart
 
   ice40up5k:
     default_tool : icestorm
@@ -33,18 +34,19 @@ targets:
       icestorm:
         nextpnr_options: [--up5k, --package sg48]
         pnr: next
-    toplevel : top
+    toplevel : uart
 
 generate:
   migen_uart_icestick_loopback:
-    generator : migen_uart
+    generator : migen_uart_gen
     parameters:
       clk_freq: 12000000
       baud_rate : 19200
       loopback : true
       platform : icestick
+
   migen_uart_ice40up5k_loopback:
-    generator : migen_uart
+    generator : migen_uart_gen
     parameters:
       clk_freq: 12000000
       baud_rate : 19200
