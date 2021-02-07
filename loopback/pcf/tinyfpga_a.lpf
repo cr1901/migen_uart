@@ -8,4 +8,3 @@ LOCATE COMP "load_led" SITE "20" ;
 LOCATE COMP "sys_clk" SITE "21" ;
 LOCATE COMP "take_led" SITE "23" ;
 LOCATE COMP "empty_led" SITE "25" ;
-LOCATE COMP "sys_rst" SITE "26" ;

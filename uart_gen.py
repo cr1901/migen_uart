@@ -1,6 +1,7 @@
-from migen import If, Module
+from migen import If, Module, ClockSignal, ClockDomain
 from migen.fhdl import verilog
 from migen.fhdl.structure import Signal
+from migen.genlib.io import CRG
 from migen.build.generic_platform import Pins, Subsignal, IOStandard
 
 from fusesoc.capi2.generator import Generator
@@ -95,6 +96,11 @@ class UartGenerator(Generator):
 
 
             else:
+                # Mimic the platforms above and add a vendor-independent
+                # Clock Reset Generator
+                clk = Signal()
+                m.submodules += CRG(clk)
+
                 ios = {
                     m.uart.tx,
                     m.uart.rx,
@@ -103,6 +109,7 @@ class UartGenerator(Generator):
                     m.load_led,
                     m.take_led,
                     m.empty_led,
+                    clk
                 }
                 with open(self.output_file, "w") as fp:
                     fp.write(str(verilog.convert(m, ios=ios)))
