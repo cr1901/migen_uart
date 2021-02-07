@@ -7,6 +7,11 @@ filesets:
     depend:
       [cr1901:migen:uart]
 
+  tinyfpga_a:
+    files:
+      - pcf/tinyfpga_a.lpf:
+          file_type: LPF
+
 targets:
   icestick:
     default_tool : icestorm
@@ -28,6 +33,15 @@ targets:
         pnr: next
     toplevel : uart
 
+  tinyfpga_a:
+    default_tool : diamond
+    filesets : [migen_uart_dep, tinyfpga_a]
+    generate : [tinyfpga_a]
+    tools:
+      diamond:
+        part: LCMXO2-1200HC-4SG32C
+    toplevel : top
+
 generate:
   icestick:
     generator : migen_uart_gen
@@ -44,3 +58,10 @@ generate:
       baud_rate : 19200
       loopback : true
       platform : ice40_up5k_b_evn
+
+  tinyfpga_a:
+    generator : migen_uart_gen
+    parameters:
+      clk_freq: 12000000
+      baud_rate : 19200
+      loopback : true
