@@ -54,7 +54,8 @@ generate:
       clk_freq: 12000000
       baud_rate : 19200
       loopback : true
-      platform : icestick
+      migen:
+        platform : icestick
 
   ice40_up5k_b_evn:
     generator : migen_uart_gen
@@ -62,7 +63,8 @@ generate:
       clk_freq: 12000000
       baud_rate : 19200
       loopback : true
-      platform : ice40_up5k_b_evn
+      migen:
+        platform : ice40_up5k_b_evn
 
   icebreaker:
     generator : migen_uart_gen
@@ -70,7 +72,8 @@ generate:
       clk_freq: 12000000
       baud_rate : 19200
       loopback : true
-      platform : icebreaker
+      migen:
+        platform : icebreaker
 
   tinyfpga_a:
     generator : migen_uart_gen

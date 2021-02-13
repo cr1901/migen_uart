@@ -40,9 +40,14 @@ class UartGenerator(Generator):
         super().__init__()
         self.clk_freq  = self.config.get('clk_freq', 12000000)
         self.baud_rate = self.config.get('baud_rate', 19200)
-        self.platform  = self.config.get('platform')
         self.loopback = self.config.get('loopback')
         self.loc_attrs = self.config.get('loc_attrs')
+
+        migen_opts = self.config.get('migen')
+        if migen_opts:
+            self.platform = migen_opts.get('platform')
+        else:
+            self.platform = None
 
     def run(self):
         if self.loopback:
