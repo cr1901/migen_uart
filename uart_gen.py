@@ -46,62 +46,63 @@ class UartGenerator(Generator):
 
     def run(self):
         if self.loopback:
-            m = top(self.clk_freq, self.baud_rate)
-
             if self.platform:
-                try:
-                    module = "migen.build.platforms." + self.platform
-                    plat = importlib.import_module(module).Platform()
-                except ModuleNotFoundError:
-                    print("Can't find platform " + self.platform)
-                    exit(1)
-
-                if self.platform == "ice40_up5k_b_evn":
-                    # PMOD test.
-                    pmod_serial = [
-                        ("serial", 0,
-                            Subsignal("rx", Pins("PMOD:6")),
-                            Subsignal("tx", Pins("PMOD:5")),
-                            Subsignal("rts", Pins("PMOD:4")),
-                            Subsignal("cts", Pins("PMOD:7")),
-                            IOStandard("LVCMOS33"),
-                        ),
-                    ]
-                    plat.add_extension(pmod_serial)
-
-                serial = plat.request("serial")
-
-                if self.platform == "icestick":
-                    rx_led = plat.request("user_led")
-                    tx_led = plat.request("user_led")
-                    load_led = plat.request("user_led")
-                    take_led = plat.request("user_led")
-                    empty_led = plat.request("user_led")
-                    m.comb += [
-                        tx_led.eq(m.tx_led),
-                        rx_led.eq(m.rx_led),
-                        load_led.eq(m.load_led),
-                        take_led.eq(m.take_led),
-                        empty_led.eq(m.empty_led),
-                    ]
-
-                m.comb += [
-                    serial.tx.eq(m.uart.tx),
-                    m.uart.rx.eq(serial.rx),
-                ]
-
-                plat.build(m, run=False, build_name="uart")
-                files = [
-                    {'build/uart.v' : {'file_type' : 'verilogSource'}},
-                    {'build/uart.pcf' : {'file_type' : 'PCF'}}]
-
-
+                files = self.gen_loopback_platform()
             else:
                 files = self.gen_loopback_generic()
         else:
             files = self.gen_core()
 
         self.add_files(files)
+
+    # Generate a design with loopback, but handle constraints within migen.
+    def gen_loopback_platform(self):
+        m = top(self.clk_freq, self.baud_rate)
+
+        try:
+            module = "migen.build.platforms." + self.platform
+            plat = importlib.import_module(module).Platform()
+        except ModuleNotFoundError as e:
+            print("Can't find platform " + self.platform)
+            exit(1)
+
+        if self.platform == "ice40_up5k_b_evn":
+            # PMOD test.
+            pmod_serial = [
+                ("serial", 0,
+                    Subsignal("rx", Pins("PMOD:6")),
+                    Subsignal("tx", Pins("PMOD:5")),
+                    Subsignal("rts", Pins("PMOD:4")),
+                    Subsignal("cts", Pins("PMOD:7")),
+                    IOStandard("LVCMOS33"),
+                ),
+            ]
+            plat.add_extension(pmod_serial)
+
+        serial = plat.request("serial")
+
+        if self.platform == "icestick":
+            rx_led = plat.request("user_led")
+            tx_led = plat.request("user_led")
+            load_led = plat.request("user_led")
+            take_led = plat.request("user_led")
+            empty_led = plat.request("user_led")
+            m.comb += [
+                tx_led.eq(m.tx_led),
+                rx_led.eq(m.rx_led),
+                load_led.eq(m.load_led),
+                take_led.eq(m.take_led),
+                empty_led.eq(m.empty_led),
+            ]
+
+        m.comb += [
+            serial.tx.eq(m.uart.tx),
+            m.uart.rx.eq(serial.rx),
+        ]
+
+        plat.build(m, run=False, build_name="uart")
+        return [{'build/uart.v' : {'file_type' : 'verilogSource'}},
+            {'build/uart.pcf' : {'file_type' : 'PCF'}}]
 
     # Generate a design with loopback, but handle constraints outside of
     # migen.
@@ -120,6 +121,7 @@ class UartGenerator(Generator):
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
 
+    # Generate a core to be included in another project.
     def gen_core(self):
         m = uart.Core(self.clk_freq, self.baud_rate)
 
