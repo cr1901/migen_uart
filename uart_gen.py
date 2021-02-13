@@ -33,7 +33,6 @@ class top(Module):
             )
         ]
 
-
 class UartGenerator(Generator):
     output_file = "uart.v"
 
@@ -43,6 +42,7 @@ class UartGenerator(Generator):
         self.baud_rate = self.config.get('baud_rate', 19200)
         self.platform  = self.config.get('platform')
         self.loopback = self.config.get('loopback')
+        self.loc_attrs = self.config.get('loc_attrs')
 
     def run(self):
         if self.loopback:
@@ -113,11 +113,22 @@ class UartGenerator(Generator):
         # Clock Reset Generator
         clk = Signal()
         m.submodules += CRG(clk)
+        ios = {
+                "tx" : m.uart.tx,
+                "rx" : m.uart.rx,
+                "tx_led" : m.tx_led,
+                "rx_led" : m.rx_led,
+                "load_led" : m.load_led,
+                "take_led" : m.take_led,
+                "empty_led" : m.empty_led,
+                "clk" : clk
+        }
 
-        ios = {m.uart.tx, m.uart.rx, m.tx_led, m.rx_led, m.load_led,
-               m.take_led, m.empty_led, clk}
+        if self.loc_attrs:
+            self.gen_loc_attrs(ios)
+
         with open(self.output_file, "w") as fp:
-            fp.write(str(verilog.convert(m, ios=ios)))
+            fp.write(str(verilog.convert(m, ios=set(ios.values()))))
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
 
@@ -132,6 +143,12 @@ class UartGenerator(Generator):
             fp.write(str(verilog.convert(m, ios=ios)))
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
+
+    # If using (* LOC = "" *)-style attrs, insert them here based on provided
+    # config file.
+    def gen_loc_attrs(self, ios):
+        for k, v in self.loc_attrs.items():
+            ios[k].attr = [( "LOC" , str(v) )]
 
 
 ug = UartGenerator()

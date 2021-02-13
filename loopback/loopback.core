@@ -7,11 +7,6 @@ filesets:
     depend:
       [cr1901:migen:uart]
 
-  tinyfpga_a:
-    files:
-      - pcf/tinyfpga_a.lpf:
-          file_type: LPF
-
 targets:
   icestick:
     default_tool : icestorm
@@ -45,7 +40,7 @@ targets:
 
   tinyfpga_a:
     default_tool : diamond
-    filesets : [migen_uart_dep, tinyfpga_a]
+    filesets : [migen_uart_dep]
     generate : [tinyfpga_a]
     tools:
       diamond:
@@ -82,4 +77,13 @@ generate:
     parameters:
       clk_freq: 12000000
       baud_rate : 19200
+      loc_attrs:
+        tx: 14
+        rx_led: 13
+        rx: 16
+        tx_led: 17
+        load_led: 20
+        clk: 21
+        take_led: 23
+        empty_led: 25
       loopback : true
