@@ -97,30 +97,28 @@ class UartGenerator(Generator):
 
 
             else:
-                # Mimic the platforms above and add a vendor-independent
-                # Clock Reset Generator
-                clk = Signal()
-                m.submodules += CRG(clk)
-
-                ios = {
-                    m.uart.tx,
-                    m.uart.rx,
-                    m.tx_led,
-                    m.rx_led,
-                    m.load_led,
-                    m.take_led,
-                    m.empty_led,
-                    clk
-                }
-                with open(self.output_file, "w") as fp:
-                    fp.write(str(verilog.convert(m, ios=ios)))
-
-                files = [{'uart.v' : {'file_type' : 'verilogSource'}}]
-
+                files = self.gen_loopback_generic()
         else:
             files = self.gen_core()
 
         self.add_files(files)
+
+    # Generate a design with loopback, but handle constraints outside of
+    # migen.
+    def gen_loopback_generic(self):
+        m = top(self.clk_freq, self.baud_rate)
+
+        # Mimic the platforms above and add a vendor-independent
+        # Clock Reset Generator
+        clk = Signal()
+        m.submodules += CRG(clk)
+
+        ios = {m.uart.tx, m.uart.rx, m.tx_led, m.rx_led, m.load_led,
+               m.take_led, m.empty_led, clk}
+        with open(self.output_file, "w") as fp:
+            fp.write(str(verilog.convert(m, ios=ios)))
+
+        return [{'uart.v' : {'file_type' : 'verilogSource'}}]
 
     def gen_core(self):
         m = uart.Core(self.clk_freq, self.baud_rate)
