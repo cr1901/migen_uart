@@ -33,6 +33,16 @@ targets:
         pnr: next
     toplevel : uart
 
+  icebreaker:
+    default_tool : icestorm
+    filesets : [migen_uart_dep]
+    generate : [icebreaker]
+    tools:
+      icestorm:
+        nextpnr_options: [--up5k, --package sg48]
+        pnr: next
+    toplevel : uart
+
   tinyfpga_a:
     default_tool : diamond
     filesets : [migen_uart_dep, tinyfpga_a]
@@ -58,6 +68,14 @@ generate:
       baud_rate : 19200
       loopback : true
       platform : ice40_up5k_b_evn
+
+  icebreaker:
+    generator : migen_uart_gen
+    parameters:
+      clk_freq: 12000000
+      baud_rate : 19200
+      loopback : true
+      platform : icebreaker
 
   tinyfpga_a:
     generator : migen_uart_gen
