@@ -37,25 +37,26 @@ class top(Module):
 class UartGenerator(Generator):
     output_file = "uart.v"
 
+    def __init__(self):
+        super().__init__()
+        self.clk_freq  = self.config.get('clk_freq', 12000000)
+        self.baud_rate = self.config.get('baud_rate', 19200)
+        self.platform  = self.config.get('platform')
+        self.loopback = self.config.get('loopback')
+
     def run(self):
-        clk_freq  = self.config.get('clk_freq', 12000000)
-        baud_rate = self.config.get('baud_rate', 19200)
-        platform  = self.config.get('platform')
+        if self.loopback:
+            m = top(self.clk_freq, self.baud_rate)
 
-        files = [{'uart.v' : {'file_type' : 'verilogSource'}}]
-
-        if self.config.get('loopback'):
-            m = top(clk_freq, baud_rate)
-
-            if platform:
+            if self.platform:
                 try:
-                    module = "migen.build.platforms."+platform
+                    module = "migen.build.platforms." + self.platform
                     plat = importlib.import_module(module).Platform()
                 except ModuleNotFoundError:
-                    print("Can't find platform " + platform)
+                    print("Can't find platform " + self.platform)
                     exit(1)
 
-                if platform == "ice40_up5k_b_evn":
+                if self.platform == "ice40_up5k_b_evn":
                     # PMOD test.
                     pmod_serial = [
                         ("serial", 0,
@@ -70,7 +71,7 @@ class UartGenerator(Generator):
 
                 serial = plat.request("serial")
 
-                if platform == "icestick":
+                if self.platform == "icestick":
                     rx_led = plat.request("user_led")
                     tx_led = plat.request("user_led")
                     load_led = plat.request("user_led")
@@ -114,24 +115,24 @@ class UartGenerator(Generator):
                 with open(self.output_file, "w") as fp:
                     fp.write(str(verilog.convert(m, ios=ios)))
 
+                files = [{'uart.v' : {'file_type' : 'verilogSource'}}]
+
         else:
-            m = uart.Core(clk_freq, baud_rate)
-
-            ios = {m.tx,
-                   m.rx,
-                   m.out_data,
-                   m.in_data,
-                   m.wr,
-                   m.rd,
-                   m.tx_empty,
-                   m.rx_empty,
-                   m.tx_ov,
-                   m.rx_ov,}
-
-            with open(self.output_file, "w") as fp:
-                fp.write(str(verilog.convert(m, ios=ios)))
+            files = self.gen_core()
 
         self.add_files(files)
+
+    def gen_core(self):
+        m = uart.Core(self.clk_freq, self.baud_rate)
+
+        ios = {m.tx, m.rx, m.out_data, m.in_data, m.wr, m.rd,
+               m.tx_empty, m.rx_empty, m.tx_ov, m.rx_ov}
+
+        with open(self.output_file, "w") as fp:
+            fp.write(str(verilog.convert(m, ios=ios)))
+
+        return [{'uart.v' : {'file_type' : 'verilogSource'}}]
+
 
 ug = UartGenerator()
 ug.run()
