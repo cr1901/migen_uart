@@ -8,7 +8,7 @@ from fusesoc.capi2.generator import Generator
 import importlib
 import uart
 
-class top(Module):
+class LoopbackTop(Module):
     def __init__(self, clk_freq, baud_rate):
         self.submodules.uart = uart.Core(clk_freq, baud_rate)
 
@@ -41,7 +41,6 @@ class UartGenerator(Generator):
         self.clk_freq  = self.config.get('clk_freq', 12000000)
         self.baud_rate = self.config.get('baud_rate', 19200)
         self.loopback = self.config.get('loopback')
-        self.loc_attrs = self.config.get('loc_attrs')
 
         migen_opts = self.config.get('migen')
         if migen_opts:
@@ -62,7 +61,7 @@ class UartGenerator(Generator):
 
     # Generate a design with loopback, but handle constraints within migen.
     def gen_loopback_platform(self):
-        m = top(self.clk_freq, self.baud_rate)
+        m = LoopbackTop(self.clk_freq, self.baud_rate)
 
         try:
             module = "migen.build.platforms." + self.platform
@@ -105,25 +104,17 @@ class UartGenerator(Generator):
     # Generate a design with loopback, but handle constraints outside of
     # migen.
     def gen_loopback_generic(self):
-        m = top(self.clk_freq, self.baud_rate)
+        m = LoopbackTop(self.clk_freq, self.baud_rate)
 
         # Mimic the platforms above and add a vendor-independent
         # Clock Reset Generator
         clk = Signal()
         m.submodules += CRG(clk)
-        ios = {
-                "tx" : m.uart.tx,
-                "rx" : m.uart.rx,
-                "tx_led" : m.tx_led,
-                "rx_led" : m.rx_led,
-                "load_led" : m.load_led,
-                "take_led" : m.take_led,
-                "empty_led" : m.empty_led,
-                "clk" : clk
-        }
+        ios = {m.uart.tx, m.uart.rx, m.tx_led, m.rx_led, m.load_led,
+               m.take_led, m.empty_led, clk}
 
         with open(self.output_file, "w") as fp:
-            fp.write(str(verilog.convert(m, ios=set(ios.values()))))
+            fp.write(str(verilog.convert(m, ios=ios, name="uart")))
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
 
@@ -135,7 +126,7 @@ class UartGenerator(Generator):
                m.tx_empty, m.rx_empty, m.tx_ov, m.rx_ov}
 
         with open(self.output_file, "w") as fp:
-            fp.write(str(verilog.convert(m, ios=ios)))
+            fp.write(str(verilog.convert(m, ios=ios, name="uart")))
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
 

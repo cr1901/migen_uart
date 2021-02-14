@@ -50,7 +50,7 @@ targets:
     tools:
       diamond:
         part: LCMXO2-1200HC-4SG32C
-    toplevel : top
+    toplevel : uart
 
 generate:
   icestick:
