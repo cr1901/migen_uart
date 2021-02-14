@@ -31,14 +31,9 @@ generators:
       Configuration 3 will automatically generate ports based on the available
       "serial" and "user_led" resources.
 
-      In configuration 2, loc_attrs can be specified to create
-      constraints within the Verilog files for toolchains that don't use a
-      separate PCF file.
-
       parameters:
         clk_freq (int) : Frequency (Hz) of the clock (default 12000000)
         baud_rate (int) : Requested baud rate (default 19200)
-        loc_attrs (dict) : Generate core with LOC attrs (* LOC = "" *)
         loopback (bool) : Generate a loopback test wrapper to be included in other
                           projects (or standalone if using loc_attrs)
         migen (dict) : Options for Migen code generation, dict entries

@@ -129,9 +129,6 @@ class UartGenerator(Generator):
                 "clk" : clk
         }
 
-        if self.loc_attrs:
-            self.gen_loc_attrs(ios)
-
         with open(self.output_file, "w") as fp:
             fp.write(str(verilog.convert(m, ios=set(ios.values()))))
 
@@ -148,12 +145,6 @@ class UartGenerator(Generator):
             fp.write(str(verilog.convert(m, ios=ios)))
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
-
-    # If using (* LOC = "" *)-style attrs, insert them here based on provided
-    # config file.
-    def gen_loc_attrs(self, ios):
-        for k, v in self.loc_attrs.items():
-            ios[k].attr = [( "LOC" , str(v) )]
 
 
 ug = UartGenerator()
