@@ -2,7 +2,7 @@ from migen import If, Module, ClockSignal, ClockDomain
 from migen.fhdl import verilog
 from migen.fhdl.structure import Signal
 from migen.genlib.io import CRG
-from migen.build.generic_platform import Pins, Subsignal, IOStandard
+from migen.build.generic_platform import Pins, Subsignal, IOStandard, ConstraintError
 
 from fusesoc.capi2.generator import Generator
 import importlib
@@ -86,19 +86,12 @@ class UartGenerator(Generator):
 
         serial = plat.request("serial")
 
-        if self.platform == "icestick":
-            rx_led = plat.request("user_led")
-            tx_led = plat.request("user_led")
-            load_led = plat.request("user_led")
-            take_led = plat.request("user_led")
-            empty_led = plat.request("user_led")
-            m.comb += [
-                tx_led.eq(m.tx_led),
-                rx_led.eq(m.rx_led),
-                load_led.eq(m.load_led),
-                take_led.eq(m.take_led),
-                empty_led.eq(m.empty_led),
-            ]
+        for led_mod in [m.tx_led, m.rx_led, m.load_led, m.take_led, m.empty_led]:
+            try:
+                led = plat.request("user_led")
+                m.comb += led.eq(led_mod)
+            except ConstraintError:
+                continue
 
         m.comb += [
             serial.tx.eq(m.uart.tx),
