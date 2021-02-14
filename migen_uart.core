@@ -9,11 +9,35 @@ generators:
     description: Migen UART generator
     usage: |
       Generate a simple UART with compile-time configurable baud rate
-      for a predefined target clock frequency
+      for a predefined target clock frequency. The UART core can be used
+      in 3 configurations:
+
+      1. As part of a larger design, when loopback=false.
+      2. Standalone loopback design where migen only handles Verilog gen, when
+         loopback=true and the migen platform isn't specified.
+      3. Standalone loopback design where migen supplies PCF as well,
+         when loopback=true and migen platform is specified.
+
+      In configuration 1, the generated core ports are:
+
+      tx, rx, out_data[7:0], in_data[7:0] wr, rd, tx_empty, rx_empty, tx_ov,
+      rx_ov, clk, rst
+
+      In configuration 2, the generated core ports are (rst handled
+      internally):
+
+      tx, rx, tx_led, rx_led, load_led, take_led, empty_led, clk
+
+      Configuration 3 will automatically generate ports based on the available
+      "serial" and "user_led" resources.
+
+      In configuration 2, loc_attrs can be specified to create
+      constraints within the Verilog files for toolchains that don't use a
+      separate PCF file.
 
       parameters:
-        clk_freq (int) : Frequency (Hz) of the clock
-        baud_rate (int) : Requested baud rate
+        clk_freq (int) : Frequency (Hz) of the clock (default 12000000)
+        baud_rate (int) : Requested baud rate (default 19200)
         loc_attrs (dict) : Generate core with LOC attrs (* LOC = "" *)
         loopback (bool) : Generate a loopback test wrapper to be included in other
                           projects (or standalone if using loc_attrs)
