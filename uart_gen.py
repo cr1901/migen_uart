@@ -45,6 +45,7 @@ class UartGenerator(Generator):
         migen_opts = self.config.get('migen')
         if migen_opts:
             self.platform = migen_opts.get('platform')
+            self.extensions = migen_opts.get('extensions')
         else:
             self.platform = None
 
@@ -70,20 +71,15 @@ class UartGenerator(Generator):
             print("Can't find platform " + self.platform)
             exit(1)
 
-        if self.platform == "ice40_up5k_b_evn":
-            # PMOD test.
-            pmod_serial = [
-                ("serial", 0,
-                    Subsignal("rx", Pins("PMOD:6")),
-                    Subsignal("tx", Pins("PMOD:5")),
-                    Subsignal("rts", Pins("PMOD:4")),
-                    Subsignal("cts", Pins("PMOD:7")),
-                    IOStandard("LVCMOS33"),
-                ),
-            ]
-            plat.add_extension(pmod_serial)
+        exts = self.mk_extensions()
+        if exts:
+            plat.add_extension(exts)
 
         serial = plat.request("serial")
+        m.comb += [
+            serial.tx.eq(m.uart.tx),
+            m.uart.rx.eq(serial.rx),
+        ]
 
         for led_mod in [m.tx_led, m.rx_led, m.load_led, m.take_led, m.empty_led]:
             try:
@@ -91,11 +87,6 @@ class UartGenerator(Generator):
                 m.comb += led.eq(led_mod)
             except ConstraintError:
                 continue
-
-        m.comb += [
-            serial.tx.eq(m.uart.tx),
-            m.uart.rx.eq(serial.rx),
-        ]
 
         plat.build(m, run=False, build_name="uart")
         return [{'build/uart.v' : {'file_type' : 'verilogSource'}},
@@ -129,6 +120,50 @@ class UartGenerator(Generator):
             fp.write(str(verilog.convert(m, ios=ios, name="uart")))
 
         return [{'uart.v' : {'file_type' : 'verilogSource'}}]
+
+    # Convert YAML description of migen extensions to what the build system
+    # expects.
+    def mk_extensions(self):
+        ext_list = None
+
+        if self.extensions:
+            ext_list = []
+            for name, ext_data in self.extensions.items():
+                if name not in ("serial", "user_led"):
+                    print("extensions must be one of \"serial\" or \"user_led\"")
+                    exit(2)
+
+                ext_count = 0
+                # Extensions can have more than one instance.
+                for inst in ext_data:
+                    subsignals = []
+                    pins = []
+                    io_standard = []
+
+                    pins_cfg = inst.get("pins")
+                    subsig_cfg = inst.get("subsignals")
+                    io_cfg = inst.get("io_standard")
+
+                    if pins_cfg is not None and subsig_cfg is not None:
+                        print("extensions must contain \"pins\" or \"subsignals\", but not both")
+                        exit(3)
+
+                    if pins_cfg:
+                        pins.append(Pins(pins_cfg))
+
+                    if subsig_cfg:
+                        for sub_name, sub_data in subsig_cfg.items():
+                            subsignals.append(Subsignal(sub_name, Pins(sub_data["pins"])))
+
+                            # io_standard on subsignal not supported yet.
+
+                    if io_cfg:
+                        io_standard.append(IOStandard(io_cfg))
+
+                    ext_list.append((name, ext_count, *pins, *subsignals, *io_standard))
+                    ext_count = ext_count + 1
+
+        return ext_list
 
 
 ug = UartGenerator()

@@ -70,6 +70,15 @@ generate:
       loopback : true
       migen:
         platform : ice40_up5k_b_evn
+        extensions:
+          serial:
+            - subsignals:
+                rx: { pins: "PMOD:6" }
+                tx: { pins: "PMOD:5" }
+                rts: { pins: "PMOD:4" }
+                cts: { pins: "PMOD:7" }
+              io_standard:
+                LVCMOS33
 
   icebreaker:
     generator : migen_uart_gen
@@ -79,6 +88,13 @@ generate:
       loopback : true
       migen:
         platform : icebreaker
+        extensions:
+          user_led:
+            - { pins: "PMOD2:4", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:0", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:1", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:5", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:2", io_standard: LVCMOS33 }
 
   tinyfpga_a:
     generator : migen_uart_gen

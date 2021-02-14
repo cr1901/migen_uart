@@ -40,3 +40,40 @@ generators:
                        described below
           platform (str) : If using loopback, create a synthesizable design
                            targeting a specific Migen platform
+          extensions (dict): YAML description of I/O to be added to the
+                             current platform via plat.add_extension (see
+                             below section)
+
+      extension dict examples:
+        extensions:
+          serial:
+            - subsignals:
+                - [rx, "PMOD:6"]
+                - [tx, "PMOD:5"]
+                - [rts, "PMOD:4"]
+                - [cts, "PMOD:7"]
+              io_standard:
+                LVCMOS33
+
+      will generate:
+        [('serial', 0,
+          Subsignal('cts', Pins('PMOD:7')),
+          Subsignal('rts', Pins('PMOD:4')),
+          Subsignal('rx', Pins('PMOD:6')),
+          Subsignal('tx', Pins('PMOD:5')),
+          IOStandard('LVCMOS33'))]
+
+        extensions:
+          user_led:
+            - { pins: "PMOD2:4", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:0", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:1", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:5", io_standard: LVCMOS33 }
+            - { pins: "PMOD2:2", io_standard: LVCMOS33 }
+
+      will generate:
+        [('user_led', 0, Pins('PMOD2:4'), IOStandard('LVCMOS33')),
+         ('user_led', 1, Pins('PMOD2:0'), IOStandard('LVCMOS33')),
+         ('user_led', 2, Pins('PMOD2:1'), IOStandard('LVCMOS33')),
+         ('user_led', 3, Pins('PMOD2:5'), IOStandard('LVCMOS33')),
+         ('user_led', 4, Pins('PMOD2:2'), IOStandard('LVCMOS33'))]
